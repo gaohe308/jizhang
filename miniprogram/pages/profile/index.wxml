@@ -1,0 +1,93 @@
+<scroll-view class="page-scroll" scroll-y>
+  <view class="floating-orb floating-orb--top"></view>
+  <view class="floating-orb floating-orb--bottom"></view>
+  <view class="page-shell profile-page">
+    <view class="hero-card profile-hero">
+      <view class="profile-head">
+        <t-avatar size="96rpx">鹿</t-avatar>
+        <view class="profile-head__text">
+          <view class="hero__title profile-title">{{profileName}}</view>
+          <view class="hero__subtitle">局内昵称可独立维护，不影响微信原生昵称。</view>
+        </view>
+        <view class="chip-pill">近 7 天</view>
+      </view>
+      <view class="summary-grid profile-stats">
+        <view class="summary-card">
+          <view class="muted">总场次</view>
+          <view class="summary-value">{{totalGames}}</view>
+        </view>
+        <view class="summary-card">
+          <view class="muted">胜场次</view>
+          <view class="summary-value">{{wins}}</view>
+        </view>
+        <view class="summary-card">
+          <view class="muted">胜率</view>
+          <view class="summary-value">{{winRate}}</view>
+        </view>
+        <view class="summary-card">
+          <view class="muted">累计净收益</view>
+          <view class="summary-value {{totalProfit >= 0 ? 'stat-positive' : 'stat-negative'}}">
+            {{totalProfit >= 0 ? '+' : ''}}{{totalProfit}}
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view class="panel-card">
+      <view class="section-title">
+        <view class="section-heading">战绩标签</view>
+        <t-tag theme="primary" variant="light">轻量画像</t-tag>
+      </view>
+      <view class="tag-group">
+        <view class="chip-pill" wx:for="{{tags}}" wx:key="*this">{{item}}</view>
+      </view>
+    </view>
+
+    <view class="panel-card">
+      <view class="section-title">
+        <view class="section-heading">历史对局</view>
+        <view class="pill-text">{{history.length}} 条记录</view>
+      </view>
+      <view class="history-list" wx:if="{{history.length > 0}}">
+        <view class="soft-cell profile-history-item" wx:for="{{history}}" wx:key="id">
+          <view class="history-item__main">
+            <view class="history-item__title">{{item.finishedAt}} · {{item.roomName}}</view>
+            <view class="muted">{{item.summary}}</view>
+          </view>
+          <view class="history-item__profit {{item.profit >= 0 ? 'stat-positive' : 'stat-negative'}}">
+            {{item.profit >= 0 ? '+' : ''}}{{item.profit}}
+          </view>
+        </view>
+      </view>
+      <view wx:else class="empty-state">历史记录已清空，下一局开始后会重新沉淀。</view>
+    </view>
+
+    <view class="panel-card">
+      <view class="section-title">
+        <view class="section-heading">高危操作</view>
+        <t-tag theme="danger" variant="light">二次确认</t-tag>
+      </view>
+      <t-cell-group>
+        <t-cell
+          title="清空历史记录"
+          description="会删除本地 MVP 历史数据，建议后续接服务端接口时增加审计。"
+          arrow
+          bind:click="handleOpenClear"
+        />
+      </t-cell-group>
+    </view>
+  </view>
+
+  <t-dialog
+    visible="{{clearVisible}}"
+    title="清空历史记录"
+    content="此操作会移除当前小程序中的战绩历史，请确认是否继续。"
+    confirmBtn="确认清空"
+    cancelBtn="取消"
+    bind:confirm="handleConfirmClear"
+    bind:cancel="handleCloseClear"
+    bind:close="handleCloseClear"
+  />
+
+  <app-tabbar value="profile" />
+</scroll-view>

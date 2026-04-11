@@ -1,0 +1,14 @@
+<view class="app-tabbar-shell">
+  <t-tab-bar
+    value="{{value}}"
+    bind:change="onChange"
+    fixed="{{true}}"
+    placeholder="{{true}}"
+    bordered="{{false}}"
+    safe-area-inset-bottom="{{true}}"
+  >
+    <t-tab-bar-item value="home">首页</t-tab-bar-item>
+    <t-tab-bar-item value="room">房间</t-tab-bar-item>
+    <t-tab-bar-item value="profile">我的</t-tab-bar-item>
+  </t-tab-bar>
+</view>

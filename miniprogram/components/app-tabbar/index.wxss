@@ -1,0 +1,6 @@
+.app-tabbar-shell {
+  --td-tab-bar-bg-color: rgba(255, 252, 247, 0.92);
+  --td-tab-bar-color: #8d7a67;
+  --td-tab-bar-active-color: #b97a44;
+  --td-tab-bar-border-color: transparent;
+}

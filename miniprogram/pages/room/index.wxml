@@ -1,0 +1,378 @@
+<scroll-view class="page-scroll" scroll-y="false">
+  <view class="floating-orb floating-orb--top"></view>
+  <view class="floating-orb floating-orb--bottom"></view>
+  <view class="page-shell room-page {{layoutMode === 'left' ? 'room-page--left' : 'room-page--top'}}">
+    <view class="room-toolbar" style="height: {{navBarHeight}}px;">
+      <view class="room-toolbar__group" style="top: {{menuTop}}px; height: {{menuHeight}}px;">
+        <view class="toolbar-pill toolbar-pill--icon" bind:tap="handleGoHome">
+          <t-icon name="home" size="34rpx" />
+        </view>
+        <view class="toolbar-pill toolbar-pill--icon" data-action="settings" bind:tap="handleToolbarTap">
+          <t-icon name="setting" size="32rpx" />
+        </view>
+      </view>
+    </view>
+
+    <block wx:if="{{layoutMode === 'top'}}">
+      <view class="member-stage">
+        <scroll-view class="member-strip" scroll-x enable-flex>
+          <view class="member-strip__inner">
+            <view
+              class="stage-card {{item.id === currentUserId ? 'stage-card--self' : ''}} {{selectedTargetIds.indexOf(item.id) > -1 ? 'stage-card--selected' : ''}}"
+              wx:for="{{displayMembers}}"
+              wx:key="id"
+              data-member-id="{{item.id}}"
+              bind:tap="handleMemberTap"
+              bindlongpress="handleRenameStart"
+            >
+              <t-avatar size="78rpx">{{item.shortName}}</t-avatar>
+              <view class="stage-card__name">{{item.name}}</view>
+              <view class="stage-card__score {{item.balance >= 0 ? 'stat-positive' : 'stat-negative'}}">
+                {{item.balance >= 0 ? '+' : ''}}{{item.balance}}
+              </view>
+            </view>
+
+            <view class="stage-card stage-card--invite" bind:tap="handleInviteTap">
+              <view class="invite-ring">+</view>
+              <view class="stage-card__name">邀请</view>
+            </view>
+          </view>
+        </scroll-view>
+
+        <view class="tea-dock" wx:if="{{teaMember}}">
+          <view
+            class="stage-card stage-card--tea-fixed"
+            bind:tap="handleOpenTeaSettings"
+          >
+            <view class="tea-badge">茶</view>
+            <view class="stage-card__name">{{teaMember.name}}</view>
+            <view class="stage-card__score stat-negative">￥{{teaMember.balance}}</view>
+          </view>
+        </view>
+      </view>
+
+      <view class="hint-strip">
+        <swiper
+          class="hint-swiper"
+          vertical
+          autoplay
+          circular
+          interval="2800"
+          duration="350"
+        >
+          <swiper-item wx:for="{{hintMessages}}" wx:key="*this">
+            <view class="hint-strip__item">{{item}}</view>
+          </swiper-item>
+        </swiper>
+      </view>
+
+      <view class="batch-entry">
+        <view class="batch-entry__button" bind:tap="handleOpenBatchPopup">
+          <view class="batch-entry__face">转给多人</view>
+        </view>
+      </view>
+
+      <view class="room-content room-content--top">
+        <scroll-view class="room-content__main room-content__main--scroll" scroll-y enable-flex>
+          <view class="panel-card">
+            <view class="section-title">
+              <view class="section-heading">房间流水广播</view>
+              <t-tag theme="success" variant="light">公开透明</t-tag>
+            </view>
+            <view class="ledger-list">
+              <view class="ledger-card ledger-item" wx:for="{{ledger}}" wx:key="id">
+                <view class="ledger-dot"></view>
+                <view class="ledger-main">
+                  <view class="ledger-title">{{item.title}}</view>
+                  <view class="muted">{{item.description}}</view>
+                </view>
+                <view class="muted">{{item.time}}</view>
+              </view>
+            </view>
+          </view>
+        </scroll-view>
+      </view>
+    </block>
+
+    <view class="room-layout room-layout--left" wx:else>
+      <view class="left-rail">
+        <scroll-view class="left-rail__main" scroll-y enable-flex>
+          <view class="rail-card rail-card--invite" bind:tap="handleInviteTap">
+            <view class="rail-card__badge">+</view>
+            <view class="rail-card__name">邀请</view>
+          </view>
+
+          <view
+            class="rail-card {{item.id === currentUserId ? 'rail-card--self' : ''}}"
+            wx:for="{{displayMembers}}"
+            wx:key="id"
+            data-member-id="{{item.id}}"
+            bind:tap="handleMemberTap"
+            bindlongpress="handleRenameStart"
+          >
+            <t-avatar size="68rpx">{{item.shortName}}</t-avatar>
+            <view class="rail-card__name">{{item.name}}</view>
+            <view class="rail-card__score {{item.balance >= 0 ? 'stat-positive' : 'stat-negative'}}">
+              {{item.balance >= 0 ? '+' : ''}}{{item.balance}}
+            </view>
+          </view>
+        </scroll-view>
+
+        <view class="left-rail__footer">
+          <view class="rail-card rail-card--tea" wx:if="{{teaMember}}" bind:tap="handleOpenTeaSettings">
+            <view class="rail-card__tea">茶</view>
+            <view class="rail-card__name">{{teaMember.name}}</view>
+            <view class="rail-card__score stat-negative">￥{{teaMember.balance}}</view>
+          </view>
+
+          <view class="rail-batch" bind:tap="handleOpenBatchPopup">
+            <view class="rail-batch__face">转给多人</view>
+          </view>
+        </view>
+      </view>
+
+      <scroll-view class="left-main" scroll-y enable-flex>
+        <view class="hint-strip hint-strip--left">
+          <swiper
+            class="hint-swiper"
+            vertical
+            autoplay
+            circular
+            interval="2800"
+            duration="350"
+          >
+            <swiper-item wx:for="{{hintMessages}}" wx:key="*this">
+              <view class="hint-strip__item">{{item}}</view>
+            </swiper-item>
+          </swiper>
+        </view>
+
+        <view class="panel-card left-ledger">
+          <view class="section-title">
+            <view class="section-heading">房间流水广播</view>
+            <t-tag theme="success" variant="light">公开透明</t-tag>
+          </view>
+          <view class="ledger-list">
+            <view class="ledger-card ledger-item" wx:for="{{ledger}}" wx:key="id">
+              <view class="ledger-dot"></view>
+              <view class="ledger-main">
+                <view class="ledger-title">{{item.title}}</view>
+                <view class="muted">{{item.description}}</view>
+              </view>
+              <view class="muted">{{item.time}}</view>
+            </view>
+          </view>
+        </view>
+      </scroll-view>
+    </view>
+  </view>
+
+  <view class="floating-settlement" bind:tap="goSettlement">
+    <view class="floating-settlement__inner">结算</view>
+  </view>
+
+  <t-popup visible="{{popupVisible}}" placement="bottom" bind:visible-change="handlePopupVisibleChange">
+    <view class="popup-sheet">
+      <view class="popup-sheet__title">{{popupTitle}}</view>
+      <view class="muted popup-sheet__desc">{{popupDescription}}</view>
+      <view class="sheet-card amount-panel">
+        <view class="muted">输入金额</view>
+        <view class="amount-value">{{amountText || '0'}}</view>
+      </view>
+      <view class="keypad">
+        <view class="key" wx:for="{{['1','2','3','4','5','6','7','8','9']}}" wx:key="*this" data-key="{{item}}" bind:tap="handleDigitTap">{{item}}</view>
+        <view class="key" bind:tap="handleClearTap">清空</view>
+        <view class="key" data-key="0" bind:tap="handleDigitTap">0</view>
+        <view class="key" bind:tap="handleDeleteTap">删除</view>
+      </view>
+      <view class="popup-actions">
+        <t-button theme="default" variant="outline" block bind:tap="handleClearTap">重置金额</t-button>
+        <t-button theme="primary" block bind:tap="handleConfirmAccounting">确认记账</t-button>
+      </view>
+    </view>
+  </t-popup>
+
+  <t-popup visible="{{renameVisible}}" placement="bottom" bind:visible-change="handleRenameVisibleChange">
+    <view class="popup-sheet">
+      <view class="popup-sheet__title">修改局内昵称</view>
+      <view class="muted popup-sheet__desc">只影响当前牌局内的显示名称，不影响微信昵称。</view>
+      <view class="input-shell">
+        <input
+          class="rename-input"
+          value="{{renameValue}}"
+          maxlength="8"
+          placeholder="请输入昵称"
+          bindinput="handleRenameInput"
+        />
+      </view>
+      <view class="popup-actions">
+        <t-button theme="primary" block bind:tap="handleRenameConfirm">确认修改</t-button>
+      </view>
+    </view>
+  </t-popup>
+
+  <t-popup visible="{{batchPopupVisible}}" placement="center" bind:visible-change="handleBatchPopupVisibleChange">
+    <view class="settings-sheet batch-sheet">
+      <view class="settings-sheet__head">
+        <view class="settings-sheet__title">批量记账</view>
+        <view class="settings-sheet__close" bind:tap="handleCloseBatchTransfer">×</view>
+      </view>
+
+      <view class="batch-sheet__title">记录转给多个用户的金额</view>
+      <view class="muted batch-sheet__desc">提示：在需要转账的用户后输入转给对方的金额，没有可不填。</view>
+
+      <scroll-view class="batch-list" scroll-y enable-flex>
+        <view class="batch-list__inner">
+          <view class="batch-item" wx:for="{{batchTransfers}}" wx:key="id">
+            <view class="batch-item__user">
+              <t-avatar size="72rpx" wx:if="{{item.role !== 'tea'}}">{{item.shortName}}</t-avatar>
+              <view class="batch-item__tea" wx:else>茶</view>
+              <view class="batch-item__name">{{item.name}}</view>
+            </view>
+            <view class="batch-item__input">
+              <input
+                class="batch-item__field"
+                type="number"
+                value="{{item.amount}}"
+                data-target-id="{{item.id}}"
+                placeholder="请输入金额"
+                bindinput="handleBatchAmountInput"
+              />
+            </view>
+          </view>
+        </view>
+      </scroll-view>
+
+      <view class="batch-sync" bind:tap="handleSyncBatchAmount">
+        <view class="batch-sync__face">同步金额</view>
+      </view>
+
+      <view class="tea-actions batch-actions">
+        <view class="tea-action tea-action--ghost" bind:tap="handleCloseBatchTransfer">
+          <view class="tea-action__face tea-action__face--ghost">取消</view>
+        </view>
+        <view class="tea-action tea-action--primary" bind:tap="handleConfirmBatchTransfer">
+          <view class="tea-action__face tea-action__face--primary">确定</view>
+        </view>
+      </view>
+    </view>
+  </t-popup>
+
+  <t-popup visible="{{settingsVisible}}" placement="center" bind:visible-change="handleSettingsVisibleChange">
+    <view class="settings-sheet">
+      <view class="settings-sheet__head">
+        <view class="settings-sheet__title">房间设置</view>
+        <view class="settings-sheet__close" bind:tap="handleCloseSettings">×</view>
+      </view>
+
+      <view class="settings-card">
+        <view class="settings-item">
+          <view class="settings-item__label">语音播报</view>
+          <view class="settings-toggle" data-rule-key="voiceBroadcast" bind:tap="handleRuleToggle">
+            <view class="settings-toggle__track {{voiceBroadcast ? 'settings-toggle__track--active' : ''}}">
+              <view class="settings-toggle__thumb {{voiceBroadcast ? 'settings-toggle__thumb--active' : ''}}"></view>
+            </view>
+          </view>
+        </view>
+
+        <view class="settings-item settings-item--last">
+          <view class="settings-item__label">屏幕常亮</view>
+          <view class="settings-toggle" data-rule-key="keepScreenOn" bind:tap="handleRuleToggle">
+            <view class="settings-toggle__track {{keepScreenOn ? 'settings-toggle__track--active' : ''}}">
+              <view class="settings-toggle__thumb {{keepScreenOn ? 'settings-toggle__thumb--active' : ''}}"></view>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <view class="settings-card settings-layout">
+        <view class="settings-layout__head">
+          <view class="settings-layout__title">页面布局</view>
+          <view class="pill-text settings-layout__value">{{layoutText}}</view>
+        </view>
+        <view class="settings-layout__options">
+          <view class="layout-option {{layoutMode === 'top' ? 'layout-option--active' : ''}}" data-layout="top" bind:tap="handleLayoutSelect">
+            顶部
+          </view>
+          <view class="layout-option {{layoutMode === 'left' ? 'layout-option--active' : ''}}" data-layout="left" bind:tap="handleLayoutSelect">
+            左侧
+          </view>
+        </view>
+      </view>
+
+      <view class="settings-actions">
+        <view class="settings-contact" bind:tap="handleContactService">
+          <view class="settings-contact__face">联系客服</view>
+        </view>
+      </view>
+    </view>
+  </t-popup>
+
+  <t-popup visible="{{teaSettingsVisible}}" placement="center" bind:visible-change="handleTeaSettingsVisibleChange">
+    <view class="settings-sheet tea-sheet">
+      <view class="settings-sheet__head">
+        <view class="settings-sheet__title">茶水设置</view>
+        <view class="settings-sheet__close" bind:tap="handleCloseTeaSettings">×</view>
+      </view>
+
+      <view class="tea-sheet__section">
+        <view class="tea-sheet__label">类型</view>
+        <view class="tea-segment">
+          <view class="tea-segment__item {{teaFeeType === 'percent' ? 'tea-segment__item--active' : ''}}" data-type="percent" bind:tap="handleTeaTypeTap">
+            百分比
+          </view>
+          <view class="tea-segment__item {{teaFeeType === 'full' ? 'tea-segment__item--active' : ''}}" data-type="full" bind:tap="handleTeaTypeTap">
+            满额
+          </view>
+        </view>
+      </view>
+
+      <view class="tea-form-card">
+        <view class="tea-form" wx:if="{{teaFeeType === 'percent'}}">
+          <view class="tea-field">
+            <view class="tea-field__label">百分比</view>
+            <view class="tea-input-shell tea-input-shell--wide">
+              <input class="tea-input" type="number" value="{{teaFeePercent}}" data-field="teaFeePercent" placeholder="输入比例" bindinput="handleTeaInput" />
+              <view class="tea-input__suffix">%</view>
+            </view>
+          </view>
+        </view>
+
+        <view class="tea-form" wx:else>
+          <view class="tea-form__row tea-form__row--double">
+            <view class="tea-form__group">
+              <view class="tea-field__label">每满</view>
+              <view class="tea-input-shell">
+                <input class="tea-input" type="number" value="{{teaFeeFullThreshold}}" data-field="teaFeeFullThreshold" placeholder="输入金额" bindinput="handleTeaInput" />
+              </view>
+            </view>
+            <view class="tea-form__group">
+              <view class="tea-field__label">抽取</view>
+              <view class="tea-input-shell">
+                <input class="tea-input" type="number" value="{{teaFeeFullAmount}}" data-field="teaFeeFullAmount" placeholder="输入金额" bindinput="handleTeaInput" />
+              </view>
+            </view>
+          </view>
+        </view>
+
+        <view class="tea-field tea-field--stack">
+          <view class="tea-field__label">上限</view>
+          <view class="tea-input-shell tea-input-shell--wide">
+            <input class="tea-input" type="number" value="{{teaFeeCap}}" data-field="teaFeeCap" placeholder="茶水抽成最大值" bindinput="handleTeaInput" />
+          </view>
+        </view>
+      </view>
+
+      <view class="tea-actions">
+        <view class="tea-action tea-action--ghost" bind:tap="handleCloseTeaSettings">
+          <view class="tea-action__face tea-action__face--ghost">取消</view>
+        </view>
+        <view class="tea-action tea-action--primary" bind:tap="handleConfirmTeaSettings">
+          <view class="tea-action__face tea-action__face--primary">确定</view>
+        </view>
+      </view>
+    </view>
+  </t-popup>
+
+  <app-tabbar value="room" />
+</scroll-view>
