@@ -1,37 +1,55 @@
-<scroll-view class="page-scroll" scroll-y>
-  <view class="floating-orb floating-orb--top"></view>
-  <view class="floating-orb floating-orb--bottom"></view>
-  <view class="page-shell home-page">
-    <view class="hero-card hero">
-      <view class="section-title">
-        <view class="section-heading">本周战绩</view>
-        <view class="chip-pill">胜率 {{winRate}}</view>
-      </view>
-      <view class="hero__stats">
-        <view class="hero-stat">
-          <view class="hero-stat__value">{{totalGames}}</view>
-          <view class="hero-stat__label">总场</view>
+<view class="home-root">
+  <scroll-view class="page-scroll" scroll-y>
+    <view class="floating-orb floating-orb--top"></view>
+    <view class="floating-orb floating-orb--bottom"></view>
+    <view class="page-shell home-page">
+      <view class="hero-card hero">
+        <view class="section-title">
+          <view class="section-heading">本周战绩</view>
+          <view class="chip-pill">胜率 {{winRate}}</view>
         </view>
-        <view class="hero-stat">
-          <view class="hero-stat__value">{{wins}}</view>
-          <view class="hero-stat__label">胜场</view>
-        </view>
-        <view class="hero-stat">
-          <view class="hero-stat__value {{totalProfit >= 0 ? 'stat-positive' : 'stat-negative'}}">
-            {{totalProfit >= 0 ? '+' : ''}}{{totalProfit}}
+        <view class="hero__stats">
+          <view class="hero-stat">
+            <view class="hero-stat__value">{{totalGames}}</view>
+            <view class="hero-stat__label">总场</view>
           </view>
-          <view class="hero-stat__label">累计净收益</view>
+          <view class="hero-stat">
+            <view class="hero-stat__value">{{wins}}</view>
+            <view class="hero-stat__label">胜场</view>
+          </view>
+          <view class="hero-stat">
+            <view class="hero-stat__value {{totalProfit >= 0 ? 'stat-positive' : 'stat-negative'}}">
+              {{totalProfit >= 0 ? '+' : ''}}{{totalProfit}}
+            </view>
+            <view class="hero-stat__label">累计净收益</view>
+          </view>
+        </view>
+        <view class="action-grid">
+          <view class="action-shell action-shell--primary" bind:tap="handleCreateRoom">
+            <view class="action-face action-face--primary">创建记账房间</view>
+          </view>
+          <view class="action-shell action-shell--secondary" bind:tap="handleJoinRoom">
+            <view class="action-face action-face--secondary">扫码加入</view>
+          </view>
         </view>
       </view>
-      <view class="action-grid">
-        <view class="action-shell action-shell--primary" bind:tap="handleCreateRoom">
-          <view class="action-face action-face--primary">创建记账房间</view>
-        </view>
-        <view class="action-shell action-shell--secondary" bind:tap="handleJoinRoom">
-          <view class="action-face action-face--secondary">扫码加入</view>
+    </view>
+    <app-tabbar value="home" />
+  </scroll-view>
+
+  <view wx:if="{{authVisible}}" class="login-overlay">
+    <view class="login-overlay__mask"></view>
+    <view class="login-panel hero-card">
+      <view class="login-panel__eyebrow">微信登录</view>
+      <view class="login-panel__title">先登录，再开始记账</view>
+      <view class="login-panel__desc">登录后即可创建房间、扫码加入，并同步你的本周战绩与个人数据。</view>
+      <view wx:if="{{authNickname}}" class="login-panel__hint">上次登录账号：{{authNickname}}</view>
+
+      <view class="action-shell action-shell--primary login-panel__button" bind:tap="handleWechatLogin">
+        <view class="action-face action-face--primary">
+          {{authLoading ? '登录中...' : '微信一键登录'}}
         </view>
       </view>
     </view>
   </view>
-  <app-tabbar value="home" />
-</scroll-view>
+</view>

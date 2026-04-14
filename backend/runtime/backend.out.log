@@ -1,0 +1,39 @@
+[32m[Nest] 24428  - [39m2026/04/14 12:26:22 [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
+[32m[Nest] 24428  - [39m2026/04/14 12:26:22 [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +22ms[39m
+[32m[Nest] 24428  - [39m2026/04/14 12:26:23 [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPrismaModule dependencies initialized[39m[38;5;3m +234ms[39m
+[32m[Nest] 24428  - [39m2026/04/14 12:26:23 [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +62ms[39m
+[32m[Nest] 24428  - [39m2026/04/14 12:26:23 [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHealthModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 24428  - [39m2026/04/14 12:26:23 [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +2ms[39m
+[32m[Nest] 24428  - [39m2026/04/14 12:26:23 [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 24428  - [39m2026/04/14 12:26:23 [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 24428  - [39m2026/04/14 12:26:23 [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mUserModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 24428  - [39m2026/04/14 12:26:23 [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRoomModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 24428  - [39m2026/04/14 12:26:23 [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mMemberModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 24428  - [39m2026/04/14 12:26:23 [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRuleModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 24428  - [39m2026/04/14 12:26:23 [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAccountingModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 24428  - [39m2026/04/14 12:26:23 [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mSettlementModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 24428  - [39m2026/04/14 12:26:23 [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAuthModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 24428  - [39m2026/04/14 12:26:23 [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAuthController {/api/auth}:[39m[38;5;3m +7ms[39m
+[32m[Nest] 24428  - [39m2026/04/14 12:26:23 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/auth/login, POST} route[39m[38;5;3m +3ms[39m
+[32m[Nest] 24428  - [39m2026/04/14 12:26:23 [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mUserController {/api/users/me}:[39m[38;5;3m +5ms[39m
+[32m[Nest] 24428  - [39m2026/04/14 12:26:23 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/users/me, GET} route[39m[38;5;3m +3ms[39m
+[32m[Nest] 24428  - [39m2026/04/14 12:26:23 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/users/me/stats, GET} route[39m[38;5;3m +2ms[39m
+[32m[Nest] 24428  - [39m2026/04/14 12:26:23 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/users/me/history, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 24428  - [39m2026/04/14 12:26:23 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/users/me/history, DELETE} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 24428  - [39m2026/04/14 12:26:23 [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mRoomController {/api/rooms}:[39m[38;5;3m +1ms[39m
+[32m[Nest] 24428  - [39m2026/04/14 12:26:23 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/rooms, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 24428  - [39m2026/04/14 12:26:23 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/rooms/join, POST} route[39m[38;5;3m +10ms[39m
+[32m[Nest] 24428  - [39m2026/04/14 12:26:23 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/rooms/:roomId, GET} route[39m[38;5;3m +2ms[39m
+[32m[Nest] 24428  - [39m2026/04/14 12:26:23 [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mMemberController {/api/rooms/:roomId/members/me}:[39m[38;5;3m +1ms[39m
+[32m[Nest] 24428  - [39m2026/04/14 12:26:23 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/rooms/:roomId/members/me/nickname, PATCH} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 24428  - [39m2026/04/14 12:26:23 [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mRuleController {/api/rooms/:roomId/rules}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 24428  - [39m2026/04/14 12:26:23 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/rooms/:roomId/rules, PATCH} route[39m[38;5;3m +2ms[39m
+[32m[Nest] 24428  - [39m2026/04/14 12:26:23 [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mHealthController {/api/health}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 24428  - [39m2026/04/14 12:26:23 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/health, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 24428  - [39m2026/04/14 12:26:23 [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAccountingController {/api/rooms/:roomId/accounting}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 24428  - [39m2026/04/14 12:26:23 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/rooms/:roomId/accounting/single, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 24428  - [39m2026/04/14 12:26:23 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/rooms/:roomId/accounting/batch, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 24428  - [39m2026/04/14 12:26:23 [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mSettlementController {/api/rooms/:roomId/settlement}:[39m[38;5;3m +1ms[39m
+[32m[Nest] 24428  - [39m2026/04/14 12:26:23 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/rooms/:roomId/settlement, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 24428  - [39m2026/04/14 12:26:23 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/rooms/:roomId/settlement/archive, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 24428  - [39m2026/04/14 12:26:23 [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m[38;5;3m +18ms[39m

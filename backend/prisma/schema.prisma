@@ -1,0 +1,224 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum RoomStatus {
+  ACTIVE
+  ARCHIVED
+}
+
+enum MemberRole {
+  OWNER
+  PLAYER
+  TEA
+}
+
+enum TeaFeeType {
+  PERCENT
+  FULL
+}
+
+enum LayoutMode {
+  TOP
+  LEFT
+}
+
+enum EntryType {
+  SINGLE_TRANSFER
+  BATCH_TRANSFER
+  RULE_CHANGE
+  SYSTEM
+}
+
+enum IdempotencyActionType {
+  CREATE_ROOM
+  JOIN_ROOM
+  SINGLE_ACCOUNTING
+  BATCH_ACCOUNTING
+  UPDATE_RULE
+  ARCHIVE_ROOM
+}
+
+model User {
+  id             String          @id @default(cuid())
+  openid         String          @unique @db.VarChar(64)
+  unionid        String?         @db.VarChar(64)
+  nickname       String          @db.VarChar(64)
+  avatarUrl      String?         @map("avatar_url") @db.VarChar(512)
+  createdAt      DateTime        @default(now()) @map("created_at")
+  updatedAt      DateTime        @updatedAt @map("updated_at")
+  ownedRooms     Room[]          @relation("RoomOwner")
+  roomMembers    RoomMember[]
+  historyRecords HistoryRecord[]
+  idempotency    IdempotencyRecord[]
+
+  @@map("users")
+}
+
+model Room {
+  id             String          @id @default(cuid())
+  roomCode       String          @unique @map("room_code") @db.VarChar(16)
+  roomName       String          @map("room_name") @db.VarChar(64)
+  ownerUserId    String          @map("owner_user_id")
+  status         RoomStatus      @default(ACTIVE)
+  currentVersion Int             @default(1) @map("current_version")
+  createdAt      DateTime        @default(now()) @map("created_at")
+  archivedAt     DateTime?       @map("archived_at")
+  owner          User            @relation("RoomOwner", fields: [ownerUserId], references: [id])
+  members        RoomMember[]
+  rules          RoomRule?
+  ledgerEntries  LedgerEntry[]
+  settlements    Settlement[]
+  historyRecords HistoryRecord[]
+  idempotency    IdempotencyRecord[]
+
+  @@index([ownerUserId], map: "idx_rooms_owner_user_id")
+  @@map("rooms")
+}
+
+model RoomMember {
+  id           String             @id @default(cuid())
+  roomId       String             @map("room_id")
+  userId       String?            @map("user_id")
+  displayName  String             @map("display_name") @db.VarChar(64)
+  role         MemberRole
+  balance      Int                @default(0)
+  isOnline     Boolean            @default(false) @map("is_online")
+  joinedAt     DateTime           @default(now()) @map("joined_at")
+  leftAt       DateTime?          @map("left_at")
+  createdAt    DateTime           @default(now()) @map("created_at")
+  updatedAt    DateTime           @updatedAt @map("updated_at")
+  room         Room               @relation(fields: [roomId], references: [id])
+  user         User?              @relation(fields: [userId], references: [id])
+  operatedLogs LedgerEntry[]      @relation("LedgerOperator")
+  fromItems    LedgerEntryItem[]  @relation("LedgerFromMember")
+  toItems      LedgerEntryItem[]  @relation("LedgerToMember")
+  fromSettles  SettlementItem[]   @relation("SettlementFromMember")
+  toSettles    SettlementItem[]   @relation("SettlementToMember")
+
+  @@unique([roomId, userId], map: "uniq_room_members_room_id_user_id")
+  @@index([roomId], map: "idx_room_members_room_id")
+  @@map("room_members")
+}
+
+model RoomRule {
+  id                 String     @id @default(cuid())
+  roomId             String     @unique @map("room_id")
+  teaFeeType         TeaFeeType @default(PERCENT) @map("tea_fee_type")
+  teaFeePercent      Int        @default(10) @map("tea_fee_percent")
+  teaFeeFullThreshold Int       @default(10) @map("tea_fee_full_threshold")
+  teaFeeFullAmount   Int        @default(1) @map("tea_fee_full_amount")
+  teaFeeCap          Int        @default(6) @map("tea_fee_cap")
+  layoutMode         LayoutMode @default(TOP) @map("layout_mode")
+  voiceBroadcast     Boolean    @default(true) @map("voice_broadcast")
+  keepScreenOn       Boolean    @default(false) @map("keep_screen_on")
+  updatedByMemberId  String?    @map("updated_by_member_id")
+  updatedAt          DateTime   @updatedAt @map("updated_at")
+  room               Room       @relation(fields: [roomId], references: [id])
+
+  @@map("room_rules")
+}
+
+model LedgerEntry {
+  id               String            @id @default(cuid())
+  roomId           String            @map("room_id")
+  requestId        String?           @map("request_id") @db.VarChar(64)
+  operatorMemberId String?           @map("operator_member_id")
+  entryType        EntryType         @map("entry_type")
+  title            String            @db.VarChar(128)
+  description      String            @db.VarChar(512)
+  roomVersion      Int               @map("room_version")
+  occurredAt       DateTime          @default(now()) @map("occurred_at")
+  createdAt        DateTime          @default(now()) @map("created_at")
+  room             Room              @relation(fields: [roomId], references: [id])
+  operatorMember   RoomMember?       @relation("LedgerOperator", fields: [operatorMemberId], references: [id])
+  items            LedgerEntryItem[]
+
+  @@index([roomId, occurredAt], map: "idx_ledger_entries_room_id_occurred_at")
+  @@unique([roomId, requestId], map: "uniq_ledger_entries_room_id_request_id")
+  @@map("ledger_entries")
+}
+
+model LedgerEntryItem {
+  id            String      @id @default(cuid())
+  ledgerEntryId String      @map("ledger_entry_id")
+  fromMemberId  String      @map("from_member_id")
+  toMemberId    String      @map("to_member_id")
+  amount        Int
+  teaFee        Int         @default(0) @map("tea_fee")
+  netAmount     Int         @default(0) @map("net_amount")
+  createdAt     DateTime    @default(now()) @map("created_at")
+  ledgerEntry   LedgerEntry @relation(fields: [ledgerEntryId], references: [id])
+  fromMember    RoomMember  @relation("LedgerFromMember", fields: [fromMemberId], references: [id])
+  toMember      RoomMember  @relation("LedgerToMember", fields: [toMemberId], references: [id])
+
+  @@index([ledgerEntryId], map: "idx_ledger_entry_items_ledger_entry_id")
+  @@map("ledger_entry_items")
+}
+
+model Settlement {
+  id             String           @id @default(cuid())
+  roomId         String           @map("room_id")
+  teaFeeAmount   Int              @default(0) @map("tea_fee_amount")
+  transferCount  Int              @default(0) @map("transfer_count")
+  totalAbsProfit Int              @default(0) @map("total_abs_profit")
+  createdByUserId String?         @map("created_by_user_id")
+  createdAt      DateTime         @default(now()) @map("created_at")
+  room           Room             @relation(fields: [roomId], references: [id])
+  items          SettlementItem[]
+
+  @@index([roomId, createdAt], map: "idx_settlements_room_id_created_at")
+  @@map("settlements")
+}
+
+model SettlementItem {
+  id            String      @id @default(cuid())
+  settlementId  String      @map("settlement_id")
+  fromMemberId  String      @map("from_member_id")
+  toMemberId    String      @map("to_member_id")
+  amount        Int
+  createdAt     DateTime    @default(now()) @map("created_at")
+  settlement    Settlement  @relation(fields: [settlementId], references: [id])
+  fromMember    RoomMember  @relation("SettlementFromMember", fields: [fromMemberId], references: [id])
+  toMember      RoomMember  @relation("SettlementToMember", fields: [toMemberId], references: [id])
+
+  @@index([settlementId], map: "idx_settlement_items_settlement_id")
+  @@map("settlement_items")
+}
+
+model HistoryRecord {
+  id         String   @id @default(cuid())
+  userId     String   @map("user_id")
+  roomId     String   @map("room_id")
+  roomName   String   @map("room_name") @db.VarChar(64)
+  profit     Int
+  summary    String   @db.VarChar(512)
+  finishedAt DateTime @map("finished_at")
+  createdAt  DateTime @default(now()) @map("created_at")
+  user       User     @relation(fields: [userId], references: [id])
+  room       Room     @relation(fields: [roomId], references: [id])
+
+  @@index([userId, finishedAt], map: "idx_history_records_user_id_finished_at")
+  @@map("history_records")
+}
+
+model IdempotencyRecord {
+  id               String                @id @default(cuid())
+  requestId        String                @map("request_id") @db.VarChar(64)
+  roomId           String?               @map("room_id")
+  userId           String                @map("user_id")
+  actionType       IdempotencyActionType @map("action_type")
+  responseSnapshot Json?                 @map("response_snapshot")
+  createdAt        DateTime              @default(now()) @map("created_at")
+  room             Room?                 @relation(fields: [roomId], references: [id])
+  user             User                  @relation(fields: [userId], references: [id])
+
+  @@unique([requestId], map: "uniq_idempotency_records_request_id")
+  @@index([userId, actionType], map: "idx_idempotency_records_user_id_action_type")
+  @@map("idempotency_records")
+}

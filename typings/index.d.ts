@@ -2,7 +2,16 @@
 
 interface IAppOption {
   globalData: {
-    userInfo?: WechatMiniprogram.UserInfo,
+    userInfo?: WechatMiniprogram.UserInfo
+    authSession?: {
+      token: string
+      user: {
+        id: string
+        nickname: string
+        avatarUrl?: string | null
+      }
+    } | null
+    authChecked?: boolean
   }
-  userInfoReadyCallback?: WechatMiniprogram.GetUserInfoSuccessCallback,
+  userInfoReadyCallback?: WechatMiniprogram.GetUserInfoSuccessCallback
 }
