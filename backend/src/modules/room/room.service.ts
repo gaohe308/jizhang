@@ -78,10 +78,12 @@ export class RoomService {
   private async generateRoomCode() {
     for (let index = 0; index < 10; index += 1) {
       const code = randomCode()
-      const existing = await this.prismaService.room.findUnique({
-        where: { roomCode: code },
-        select: { id: true },
-      })
+      const existing = await this.prismaService.runWithReconnect('room.generateRoomCode.findUnique', () =>
+        this.prismaService.room.findUnique({
+          where: { roomCode: code },
+          select: { id: true },
+        }),
+      )
       if (!existing) {
         return code
       }
@@ -91,9 +93,11 @@ export class RoomService {
   }
 
   async createRoom(userId: string, openid: string, roomName?: string) {
-    const user = await this.prismaService.user.findUnique({
-      where: { id: userId },
-    })
+    const user = await this.prismaService.runWithReconnect('room.createRoom.user.findUnique', () =>
+      this.prismaService.user.findUnique({
+        where: { id: userId },
+      }),
+    )
 
     if (!user) {
       throw new NotFoundException('User not found.')
@@ -159,18 +163,22 @@ export class RoomService {
   }
 
   async joinRoom(userId: string, openid: string, roomCode: string) {
-    const user = await this.prismaService.user.findUnique({
-      where: { id: userId },
-    })
+    const user = await this.prismaService.runWithReconnect('room.joinRoom.user.findUnique', () =>
+      this.prismaService.user.findUnique({
+        where: { id: userId },
+      }),
+    )
 
     if (!user) {
       throw new NotFoundException('User not found.')
     }
 
-    const room = await this.prismaService.room.findUnique({
-      where: { roomCode },
-      include: roomInclude,
-    })
+    const room = await this.prismaService.runWithReconnect('room.joinRoom.room.findUnique', () =>
+      this.prismaService.room.findUnique({
+        where: { roomCode },
+        include: roomInclude,
+      }),
+    )
 
     if (!room || room.status !== RoomStatus.ACTIVE) {
       throw new NotFoundException('Room not found.')
@@ -179,15 +187,21 @@ export class RoomService {
     const existingMember = room.members.find((member) => member.userId === userId) || null
 
     if (existingMember) {
-      await this.prismaService.roomMember.update({
-        where: { id: existingMember.id },
-        data: { isOnline: true },
-      })
+      await this.prismaService.runWithReconnect('room.joinRoom.member.update', () =>
+        this.prismaService.roomMember.update({
+          where: { id: existingMember.id },
+          data: { isOnline: true },
+        }),
+      )
 
-      const latestRoom = await this.prismaService.room.findUniqueOrThrow({
-        where: { id: room.id },
-        include: roomInclude,
-      })
+      const latestRoom = await this.prismaService.runWithReconnect(
+        'room.joinRoom.latestRoom.findUniqueOrThrow',
+        () =>
+          this.prismaService.room.findUniqueOrThrow({
+            where: { id: room.id },
+            include: roomInclude,
+          }),
+      )
       return this.mapRoomSnapshot(latestRoom, userId)
     }
 
@@ -233,10 +247,12 @@ export class RoomService {
   }
 
   async getRoomSnapshot(userId: string, roomId: string) {
-    const room = await this.prismaService.room.findUnique({
-      where: { id: roomId },
-      include: roomInclude,
-    })
+    const room = await this.prismaService.runWithReconnect('room.getRoomSnapshot', () =>
+      this.prismaService.room.findUnique({
+        where: { id: roomId },
+        include: roomInclude,
+      }),
+    )
 
     if (!room) {
       throw new NotFoundException('Room not found.')

@@ -16,26 +16,30 @@ export class UserService {
   constructor(private readonly prismaService: PrismaService) {}
 
   async getMe(userId: string) {
-    return this.prismaService.user.findUniqueOrThrow({
-      where: { id: userId },
-      select: {
-        id: true,
-        openid: true,
-        nickname: true,
-        avatarUrl: true,
-        createdAt: true,
-      },
-    })
+    return this.prismaService.runWithReconnect('user.getMe', () =>
+      this.prismaService.user.findUniqueOrThrow({
+        where: { id: userId },
+        select: {
+          id: true,
+          openid: true,
+          nickname: true,
+          avatarUrl: true,
+          createdAt: true,
+        },
+      }),
+    )
   }
 
   async getStats(userId: string) {
-    const history = await this.prismaService.historyRecord.findMany({
-      where: { userId },
-      select: {
-        profit: true,
-        finishedAt: true,
-      },
-    })
+    const history = await this.prismaService.runWithReconnect('user.getStats.history', () =>
+      this.prismaService.historyRecord.findMany({
+        where: { userId },
+        select: {
+          profit: true,
+          finishedAt: true,
+        },
+      }),
+    )
 
     const totalGames = history.length
     const wins = history.filter((item) => item.profit > 0).length
@@ -60,18 +64,22 @@ export class UserService {
   }
 
   async getHistory(userId: string) {
-    return this.prismaService.historyRecord.findMany({
-      where: { userId },
-      orderBy: {
-        finishedAt: 'desc',
-      },
-    })
+    return this.prismaService.runWithReconnect('user.getHistory', () =>
+      this.prismaService.historyRecord.findMany({
+        where: { userId },
+        orderBy: {
+          finishedAt: 'desc',
+        },
+      }),
+    )
   }
 
   async clearHistory(userId: string) {
-    await this.prismaService.historyRecord.deleteMany({
-      where: { userId },
-    })
+    await this.prismaService.runWithReconnect('user.clearHistory', () =>
+      this.prismaService.historyRecord.deleteMany({
+        where: { userId },
+      }),
+    )
 
     return { success: true }
   }

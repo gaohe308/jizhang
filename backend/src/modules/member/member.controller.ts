@@ -1,4 +1,4 @@
-import { Body, Controller, Param, Patch, UseGuards } from '@nestjs/common'
+import { Body, Controller, HttpCode, Param, Patch, UseGuards } from '@nestjs/common'
 import { CurrentUser } from '../../common/decorators/current-user.decorator'
 import { AuthTokenGuard } from '../../common/guards/auth-token.guard'
 import { AuthUser } from '../../common/interfaces/auth-user.interface'
@@ -11,6 +11,7 @@ export class MemberController {
   constructor(private readonly memberService: MemberService) {}
 
   @Patch('nickname')
+  @HttpCode(200)
   updateNickname(
     @CurrentUser() user: AuthUser,
     @Param('roomId') roomId: string,

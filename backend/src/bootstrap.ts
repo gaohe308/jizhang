@@ -2,6 +2,7 @@ import 'reflect-metadata'
 import { INestApplication, Logger, ValidationPipe } from '@nestjs/common'
 import { NestFactory } from '@nestjs/core'
 import { AppModule } from './app.module'
+import { CloudBaseHttpExceptionFilter } from './common/filters/cloudbase-http-exception.filter'
 
 const DEFAULT_HTTP_FUNCTION_PORT = 9000
 const DEFAULT_LOCAL_PORT = 3000
@@ -46,6 +47,10 @@ const configureApp = (app: INestApplication) => {
       forbidNonWhitelisted: true,
     }),
   )
+
+  if (getAppRuntime() === 'cloudfunction') {
+    app.useGlobalFilters(new CloudBaseHttpExceptionFilter())
+  }
 }
 
 export const getAppRuntime = () => process.env.APP_RUNTIME || 'local'

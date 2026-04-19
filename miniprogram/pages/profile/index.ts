@@ -1,4 +1,5 @@
-import { clearMyHistory, fetchMyHistory, fetchMyProfile, fetchMyStats, HistoryRecord } from '../../utils/api'
+import { clearMyHistory, fetchMyHistory, fetchMyProfile, fetchMyStats, HistoryRecord, UserStats } from '../../utils/api'
+import { getAuthSession, updateStoredAuthUserProfile } from '../../utils/auth'
 
 interface ProfilePageData {
   profileName: string
@@ -12,13 +13,33 @@ interface ProfilePageData {
   clearVisible: boolean
 }
 
+const DEFAULT_NAME = '牌友'
+const DEFAULT_STATS: UserStats = {
+  totalGames: 0,
+  wins: 0,
+  totalProfit: 0,
+  winRate: '0.0%',
+  weekly: {
+    totalGames: 0,
+    wins: 0,
+    winRate: '0.0%',
+  },
+}
+
+const getDisplayName = (value?: string | null) => {
+  const name = value?.trim()
+  return name || DEFAULT_NAME
+}
+
+const getAvatarText = (name?: string | null) => getDisplayName(name).slice(0, 1)
+
 const formatHistoryTime = (value: string) => {
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) {
     return value
   }
 
-  return `${date.getMonth() + 1} 月${date.getDate()} 日 ${`${date.getHours()}`.padStart(2, '0')}:${`${date.getMinutes()}`.padStart(2, '0')}`
+  return `${date.getMonth() + 1} 月 ${date.getDate()} 日 ${`${date.getHours()}`.padStart(2, '0')}:${`${date.getMinutes()}`.padStart(2, '0')}`
 }
 
 const buildTags = (stats: {
@@ -39,11 +60,20 @@ const buildTags = (stats: {
   return tags
 }
 
+const mapHistory = (history: HistoryRecord[]) =>
+  history.map((item) => ({
+    ...item,
+    finishedAt: formatHistoryTime(item.finishedAt),
+  }))
+
+const getErrorMessage = (error: unknown) =>
+  error instanceof Error ? error.message : '个人数据加载失败'
+
 Page<ProfilePageData>({
   data: {
-    profileName: '',
-    avatarText: '牌',
-    tags: [],
+    profileName: DEFAULT_NAME,
+    avatarText: getAvatarText(DEFAULT_NAME),
+    tags: buildTags(DEFAULT_STATS),
     totalGames: 0,
     wins: 0,
     winRate: '0.0%',
@@ -57,25 +87,66 @@ Page<ProfilePageData>({
   },
 
   async loadPageData() {
-    try {
-      const [profile, stats, history] = await Promise.all([fetchMyProfile(), fetchMyStats(), fetchMyHistory()])
+    const session = getAuthSession()
+    const cachedName = getDisplayName(session?.user.nickname)
+
+    this.setData({
+      profileName: cachedName,
+      avatarText: getAvatarText(cachedName),
+    })
+
+    const [profileResult, statsResult, historyResult] = await Promise.allSettled([
+      fetchMyProfile(),
+      fetchMyStats(),
+      fetchMyHistory(),
+    ])
+
+    const failures: string[] = []
+
+    if (profileResult.status === 'fulfilled') {
+      const profileName = getDisplayName(profileResult.value.nickname)
+      const nextSession = updateStoredAuthUserProfile({
+        id: profileResult.value.id,
+        nickname: profileName,
+        avatarUrl: profileResult.value.avatarUrl,
+      })
+
+      if (nextSession) {
+        getApp<IAppOption>().globalData.authSession = nextSession
+      }
 
       this.setData({
-        profileName: profile.nickname,
-        avatarText: profile.nickname ? profile.nickname.slice(0, 1) : '牌',
-        tags: buildTags(stats),
-        totalGames: stats.totalGames,
-        wins: stats.wins,
-        winRate: stats.winRate,
-        totalProfit: stats.totalProfit,
-        history: history.map((item) => ({
-          ...item,
-          finishedAt: formatHistoryTime(item.finishedAt),
-        })),
+        profileName,
+        avatarText: getAvatarText(profileName),
       })
-    } catch (error) {
+    } else {
+      failures.push(getErrorMessage(profileResult.reason))
+    }
+
+    if (statsResult.status === 'fulfilled') {
+      this.setData({
+        tags: buildTags(statsResult.value),
+        totalGames: statsResult.value.totalGames,
+        wins: statsResult.value.wins,
+        winRate: statsResult.value.winRate,
+        totalProfit: statsResult.value.totalProfit,
+      })
+    } else {
+      failures.push(getErrorMessage(statsResult.reason))
+    }
+
+    if (historyResult.status === 'fulfilled') {
+      this.setData({
+        history: mapHistory(historyResult.value),
+      })
+    } else {
+      failures.push(getErrorMessage(historyResult.reason))
+    }
+
+    if (failures.length > 0) {
+      console.warn('[profile] partial data load failed', failures)
       wx.showToast({
-        title: error instanceof Error ? error.message : '个人数据加载失败',
+        title: '部分个人数据暂时加载失败',
         icon: 'none',
       })
     }

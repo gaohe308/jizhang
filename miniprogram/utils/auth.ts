@@ -13,8 +13,35 @@ export const clearAuthSession = () => {
   clearStoredSession()
 }
 
+export const updateStoredAuthUserProfile = (profile: Partial<AuthUserProfile>) => {
+  const session = getStoredSession()
+  if (!session) {
+    return null
+  }
+
+  const nextSession: AuthSession = {
+    ...session,
+    user: {
+      ...session.user,
+      ...profile,
+    },
+  }
+
+  setStoredSession(nextSession)
+  return nextSession
+}
+
 interface RetryableAuthError extends Error {
   statusCode?: number
+}
+
+const isUnauthorizedAuthError = (error: unknown) => {
+  if (!(error instanceof Error)) {
+    return false
+  }
+
+  const statusCode = (error as RetryableAuthError).statusCode
+  return statusCode === 401 || statusCode === 403
 }
 
 const isRetryableLoginError = (error: unknown) => {
@@ -40,22 +67,30 @@ export const validateSession = async (): Promise<AuthSession | null> => {
     return null
   }
 
-  const user = await request<AuthUserProfile>({
-    url: '/users/me',
-    withAuth: true,
-  })
+  try {
+    const user = await request<AuthUserProfile>({
+      url: '/users/me',
+      withAuth: true,
+    })
 
-  const nextSession: AuthSession = {
-    token: session.token,
-    user: {
-      id: user.id,
-      nickname: user.nickname,
-      avatarUrl: user.avatarUrl,
-    },
+    const nextSession: AuthSession = {
+      token: session.token,
+      user: {
+        id: user.id,
+        nickname: user.nickname,
+        avatarUrl: user.avatarUrl,
+      },
+    }
+
+    setStoredSession(nextSession)
+    return nextSession
+  } catch (error) {
+    if (isUnauthorizedAuthError(error)) {
+      clearStoredSession()
+    }
+
+    throw error
   }
-
-  setStoredSession(nextSession)
-  return nextSession
 }
 
 const getWechatCode = (): Promise<string> =>

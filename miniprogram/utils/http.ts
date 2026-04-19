@@ -16,6 +16,7 @@ interface RequestOptions {
   method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
   data?: WechatMiniprogram.IAnyObject
   withAuth?: boolean
+  retry?: number
 }
 
 interface ApiError extends Error {
@@ -39,12 +40,17 @@ const isFallbackEligibleHttpError = (error: unknown) => {
   }
 
   const statusCode = (error as ApiError).statusCode
-  if (statusCode !== 404) {
+  if (statusCode !== 404 && !!statusCode && statusCode < 500) {
     return false
   }
 
   const normalizedMessage = error.message.trim().toLowerCase()
-  return normalizedMessage === 'not found' || normalizedMessage.includes('cannot post')
+  return (
+    normalizedMessage === 'not found' ||
+    normalizedMessage.includes('cannot post') ||
+    normalizedMessage.includes('function invoke failed') ||
+    normalizedMessage.includes('internal server error')
+  )
 }
 
 export const getStoredSession = (): AuthSession | null => {
@@ -80,18 +86,24 @@ const sendRequest = <T>(
       },
       success: (response) => {
         const { statusCode, data } = response
+        const payload = data as { message?: string | string[]; statusCode?: number }
+        const payloadStatusCode =
+          typeof payload?.statusCode === 'number' ? payload.statusCode : undefined
 
-        if (statusCode >= 200 && statusCode < 300) {
+        if (
+          statusCode >= 200 &&
+          statusCode < 300 &&
+          (!payloadStatusCode || payloadStatusCode < 400)
+        ) {
           resolve(data as T)
           return
         }
 
-        const payload = data as { message?: string | string[] }
         const message = Array.isArray(payload?.message)
           ? payload.message.join(', ')
           : payload?.message || '请求失败，请稍后重试'
 
-        reject(createError(message, statusCode))
+        reject(createError(message, payloadStatusCode || statusCode))
       },
       fail: (error) => {
         reject(error)
@@ -104,13 +116,16 @@ export const request = <T>(options: RequestOptions): Promise<T> =>
     const session = options.withAuth ? getStoredSession() : null
     const candidateBaseUrls = getApiBaseUrlCandidates()
     const requestedPath = normalizeUrl(options.url)
+    const method = options.method || 'GET'
+    const maxRetry = typeof options.retry === 'number' ? options.retry : method === 'GET' ? 1 : 0
 
-    const tryRequest = async (index: number): Promise<void> => {
+    const tryRequest = async (index: number, retryCount = 0): Promise<void> => {
       const baseUrl = candidateBaseUrls[index] || getApiBaseUrl()
       const requestUrl = `${baseUrl}${requestedPath}`
       console.info('[api] request start', {
         url: requestUrl,
-        method: options.method || 'GET',
+        method,
+        retryCount,
         withAuth: !!session,
       })
 
@@ -118,7 +133,7 @@ export const request = <T>(options: RequestOptions): Promise<T> =>
         const result = await sendRequest<T>(requestUrl, options, session)
         console.info('[api] request success', {
           url: requestUrl,
-          method: options.method || 'GET',
+          method,
         })
         resolve(result)
       } catch (error) {
@@ -126,19 +141,35 @@ export const request = <T>(options: RequestOptions): Promise<T> =>
         const isNetworkFailure =
           !!error && typeof error === 'object' && ('errMsg' in error || 'errno' in error)
         const shouldFallbackForHttpError = isFallbackEligibleHttpError(error)
+        const shouldRetryCurrentBase =
+          retryCount < maxRetry && (isNetworkFailure || shouldFallbackForHttpError)
 
-        console.error('[api] 请求失败', {
-          url: requestUrl,
-          method: options.method || 'GET',
-          error,
-        })
+        if (shouldRetryCurrentBase) {
+          console.warn('[api] transient request failure, retrying current base url', {
+            url: requestUrl,
+            method,
+            retryCount: retryCount + 1,
+            error,
+          })
+          await tryRequest(index, retryCount + 1)
+          return
+        }
 
         if ((isNetworkFailure || shouldFallbackForHttpError) && hasNextCandidate) {
           const nextBaseUrl = candidateBaseUrls[index + 1]
-          console.warn(`[api] ${baseUrl} 不可用或路由不存在，自动切换到 ${nextBaseUrl}`)
-          await tryRequest(index + 1)
+          console.warn(`[api] ${baseUrl} 不可用或路由不存在，自动切换到 ${nextBaseUrl}`, {
+            error,
+          })
+          await tryRequest(index + 1, 0)
           return
         }
+
+        console.error('[api] 请求失败', {
+          url: requestUrl,
+          method,
+          retryCount,
+          error,
+        })
 
         if (error instanceof Error) {
           reject(error)

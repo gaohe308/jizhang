@@ -1,4 +1,4 @@
-import { Controller, Delete, Get, UseGuards } from '@nestjs/common'
+import { Controller, Delete, Get, HttpCode, UseGuards } from '@nestjs/common'
 import { CurrentUser } from '../../common/decorators/current-user.decorator'
 import { AuthTokenGuard } from '../../common/guards/auth-token.guard'
 import { AuthUser } from '../../common/interfaces/auth-user.interface'
@@ -25,6 +25,7 @@ export class UserController {
   }
 
   @Delete('history')
+  @HttpCode(200)
   clearHistory(@CurrentUser() user: AuthUser) {
     return this.userService.clearHistory(user.userId)
   }

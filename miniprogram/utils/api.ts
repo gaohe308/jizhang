@@ -70,6 +70,14 @@ export interface UserProfile {
   createdAt: string
 }
 
+export interface UpdateMemberNicknameResult {
+  success: boolean
+  user: {
+    id: string
+    nickname: string
+  }
+}
+
 export interface SettlementPlanItem {
   fromMemberId: string
   fromName: string
@@ -157,7 +165,7 @@ export const fetchRoomSnapshot = (roomId: string) =>
   })
 
 export const updateMemberNickname = (roomId: string, displayName: string) =>
-  request<{ success: boolean }>({
+  request<UpdateMemberNicknameResult>({
     url: `/rooms/${roomId}/members/me/nickname`,
     method: 'PATCH',
     data: { displayName: displayName.trim() },

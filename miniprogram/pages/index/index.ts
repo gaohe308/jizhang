@@ -161,12 +161,20 @@ Page<HomePageData & { pendingRoomCode?: string }>({
 
       return true
     } catch (error) {
-      clearAuthSession()
-      app.globalData.authSession = null
-      app.globalData.authChecked = true
-      this.setData({
-        authVisible: true,
-      })
+      const statusCode =
+        error instanceof Error && 'statusCode' in error
+          ? Number((error as Error & { statusCode?: unknown }).statusCode)
+          : 0
+      const shouldSignOut = statusCode === 401 || statusCode === 403
+
+      if (shouldSignOut) {
+        clearAuthSession()
+        app.globalData.authSession = null
+        app.globalData.authChecked = true
+        this.setData({
+          authVisible: true,
+        })
+      }
 
       wx.showToast({
         title: error instanceof Error ? error.message : '登录已失效，请重新登录',

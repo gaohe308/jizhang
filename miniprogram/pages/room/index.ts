@@ -10,6 +10,7 @@ import {
   updateMemberNickname,
   updateRoomRules,
 } from '../../utils/api'
+import { updateStoredAuthUserProfile } from '../../utils/auth'
 
 interface BatchTransferItem {
   id: string
@@ -63,6 +64,23 @@ interface RoomPageData {
 const ROOM_MODE_STORAGE_KEY = 'poker-room-ui-mode'
 const ROOM_POLL_INTERVAL = 3000
 let roomPollingTimer: number | null = null
+
+const isRetryableRoomLoadError = (error: unknown) => {
+  if (!(error instanceof Error)) {
+    return false
+  }
+
+  const statusCode =
+    'statusCode' in error ? Number((error as Error & { statusCode?: unknown }).statusCode) : 0
+  const message = error.message.toLowerCase()
+
+  return (
+    statusCode >= 500 ||
+    message.includes('function invoke failed') ||
+    message.includes('internal server error') ||
+    message.includes('timeout')
+  )
+}
 
 const layoutMap: Record<'top' | 'left', string> = {
   top: '顶部布局',
@@ -280,6 +298,16 @@ Page<RoomPageData>({
       setCurrentRoomSnapshot(latestRoom)
       this.applyRoomSnapshot(latestRoom)
     } catch (error) {
+      if (isRetryableRoomLoadError(error)) {
+        try {
+          const latestRoom = await fetchRoomSnapshot(room.roomId)
+          setCurrentRoomSnapshot(latestRoom)
+          this.applyRoomSnapshot(latestRoom)
+          return
+        } catch (retryError) {
+          error = retryError
+        }
+      }
       if (!silent) {
         wx.showToast({
           title: error instanceof Error ? error.message : '房间数据加载失败',
@@ -486,7 +514,16 @@ Page<RoomPageData>({
     }
 
     try {
-      await updateMemberNickname(this.data.activeRoomId, this.data.renameValue)
+      const result = await updateMemberNickname(this.data.activeRoomId, this.data.renameValue)
+      const nextSession = updateStoredAuthUserProfile({
+        id: result.user.id,
+        nickname: result.user.nickname,
+      })
+
+      if (nextSession) {
+        getApp<IAppOption>().globalData.authSession = nextSession
+      }
+
       this.setData({
         renameVisible: false,
         renameTargetId: '',

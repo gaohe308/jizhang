@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common'
+import { Body, Controller, Get, HttpCode, Param, Post, UseGuards } from '@nestjs/common'
 import { CurrentUser } from '../../common/decorators/current-user.decorator'
 import { AuthTokenGuard } from '../../common/guards/auth-token.guard'
 import { AuthUser } from '../../common/interfaces/auth-user.interface'
@@ -12,11 +12,13 @@ export class RoomController {
   constructor(private readonly roomService: RoomService) {}
 
   @Post()
+  @HttpCode(200)
   createRoom(@CurrentUser() user: AuthUser, @Body() dto: CreateRoomDto) {
     return this.roomService.createRoom(user.userId, user.openid, dto.roomName)
   }
 
   @Post('join')
+  @HttpCode(200)
   joinRoom(@CurrentUser() user: AuthUser, @Body() dto: JoinRoomDto) {
     return this.roomService.joinRoom(user.userId, user.openid, dto.roomCode)
   }
