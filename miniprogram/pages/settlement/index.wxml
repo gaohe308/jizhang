@@ -4,16 +4,16 @@
   <view class="page-shell settlement-page">
     <view class="settlement-card">
       <view class="section-title">
-        <view class="section-heading">最终付款指令</view>
-        <view class="chip-pill">服务端算法位</view>
+        <view class="section-heading">最终付款指引</view>
+        <view class="chip-pill">服务端计算</view>
       </view>
       <view class="plan-list">
         <view class="soft-cell plan-item" wx:for="{{plans}}" wx:key="index">
           <view>
             <view class="plan-item__title">{{item.from}} → {{item.to}}</view>
-            <view class="muted">建议直接微信 / 支付宝转账</view>
+            <view class="muted">请按照指引通过微信转账完成付款。</view>
           </view>
-          <view class="plan-item__amount stat-positive">¥{{item.amount}}</view>
+          <view class="plan-item__amount stat-positive">￥{{item.amount}}</view>
         </view>
       </view>
       <view class="soft-cell tea-item">
@@ -21,17 +21,35 @@
           <view class="plan-item__title">茶水账户独立结算</view>
           <view class="muted">公共费用不并入玩家个人净输赢</view>
         </view>
-        <view class="plan-item__amount">¥{{teaFeeAmount}}</view>
+        <view class="plan-item__amount">￥{{teaFeeAmount}}</view>
       </view>
     </view>
 
     <view class="panel-card">
       <view class="section-title">
         <view class="section-heading">结算摘要</view>
-        <view class="pill-text">总盈亏 {{totalAbsProfit}}</view>
+        <view class="pill-text">总盈利 {{totalAbsProfit}}</view>
       </view>
       <view class="muted settlement-copy">
-        这一步建议由服务端统一执行轧差算法。当前前端展示的是可交互的 MVP 方案，便于后续直接对接接口和 WebSocket 房间事件。
+        结算结果由服务端统一计算，确认后会写入历史记录。
+      </view>
+      <view class="metric-grid">
+        <view class="metric-card">
+          <view class="metric-label">本局赢家</view>
+          <view class="metric-value">{{winnerName}}</view>
+        </view>
+        <view class="metric-card">
+          <view class="metric-label">本局输家</view>
+          <view class="metric-value">{{loserName}}</view>
+        </view>
+        <view class="metric-card">
+          <view class="metric-label">转账笔数</view>
+          <view class="metric-value">{{transferCount}}</view>
+        </view>
+        <view class="metric-card">
+          <view class="metric-label">房间号</view>
+          <view class="metric-value">{{roomId}}</view>
+        </view>
       </view>
       <view class="popup-actions">
         <t-button theme="primary" block bind:tap="handleOpenConfirm">确认解散并归档</t-button>
@@ -43,7 +61,7 @@
   <t-dialog
     visible="{{confirmVisible}}"
     title="确认房间结算"
-    content="归档后会将当前房间写入历史记录，并重置成新的记账房间。"
+    content="确认后将归档当前房间结算结果，并解散房间。"
     confirmBtn="确认归档"
     cancelBtn="再想想"
     bind:confirm="handleConfirmArchive"

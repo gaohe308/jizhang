@@ -634,11 +634,18 @@
 
 .settings-contact {
   width: 276rpx;
+  margin: 0;
   padding: 4rpx;
   border-radius: 999rpx;
+  border: none;
+  outline: none;
   box-sizing: border-box;
   background: linear-gradient(180deg, #d7a16c 0%, #c6884b 100%);
   box-shadow: 0 16rpx 24rpx rgba(129, 98, 64, 0.1);
+}
+
+.settings-contact::after {
+  border: none;
 }
 
 .settings-contact__face {

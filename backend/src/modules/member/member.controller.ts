@@ -16,6 +16,6 @@ export class MemberController {
     @Param('roomId') roomId: string,
     @Body() dto: UpdateMemberNicknameDto,
   ) {
-    return this.memberService.updateNickname(user.userId, roomId, dto.displayName)
+    return this.memberService.updateNickname(user.userId, user.openid, roomId, dto.displayName)
   }
 }

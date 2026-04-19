@@ -12,6 +12,6 @@ export class RuleController {
 
   @Patch()
   updateRules(@CurrentUser() user: AuthUser, @Param('roomId') roomId: string, @Body() dto: UpdateRoomRuleDto) {
-    return this.ruleService.updateRules(user.userId, roomId, dto)
+    return this.ruleService.updateRules(user.userId, user.openid, roomId, dto)
   }
 }

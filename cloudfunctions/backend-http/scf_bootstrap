@@ -1,0 +1,4 @@
+#!/bin/bash
+export APP_RUNTIME=cloudfunction
+export PORT=${HTTP_FUNCTION_PORT:-9000}
+node index.js

@@ -1,3 +1,5 @@
+import { getApiBaseUrl, getApiBaseUrlCandidates } from './env'
+
 export interface AuthUserProfile {
   id: string
   nickname: string
@@ -20,8 +22,8 @@ interface ApiError extends Error {
   statusCode?: number
 }
 
-const BASE_URL = 'http://127.0.0.1:3000/api'
 const AUTH_STORAGE_KEY = 'poker-bookkeeping-auth-session'
+const REQUEST_TIMEOUT_MS = 15000
 
 const normalizeUrl = (url: string) => (url.startsWith('/') ? url : `/${url}`)
 
@@ -29,6 +31,20 @@ const createError = (message: string, statusCode?: number): ApiError => {
   const error = new Error(message) as ApiError
   error.statusCode = statusCode
   return error
+}
+
+const isFallbackEligibleHttpError = (error: unknown) => {
+  if (!(error instanceof Error)) {
+    return false
+  }
+
+  const statusCode = (error as ApiError).statusCode
+  if (statusCode !== 404) {
+    return false
+  }
+
+  const normalizedMessage = error.message.trim().toLowerCase()
+  return normalizedMessage === 'not found' || normalizedMessage.includes('cannot post')
 }
 
 export const getStoredSession = (): AuthSession | null => {
@@ -47,15 +63,17 @@ export const clearStoredSession = () => {
   wx.removeStorageSync(AUTH_STORAGE_KEY)
 }
 
-export const request = <T>(options: RequestOptions): Promise<T> =>
+const sendRequest = <T>(
+  requestUrl: string,
+  options: RequestOptions,
+  session: AuthSession | null,
+): Promise<T> =>
   new Promise((resolve, reject) => {
-    const session = options.withAuth ? getStoredSession() : null
-
     wx.request({
-      url: `${BASE_URL}${normalizeUrl(options.url)}`,
+      url: requestUrl,
       method: options.method || 'GET',
       data: options.data,
-      timeout: 10000,
+      timeout: REQUEST_TIMEOUT_MS,
       header: {
         'content-type': 'application/json',
         ...(session ? { Authorization: `Bearer ${session.token}` } : {}),
@@ -71,12 +89,65 @@ export const request = <T>(options: RequestOptions): Promise<T> =>
         const payload = data as { message?: string | string[] }
         const message = Array.isArray(payload?.message)
           ? payload.message.join(', ')
-          : payload?.message || '\u8bf7\u6c42\u5931\u8d25\uff0c\u8bf7\u7a0d\u540e\u91cd\u8bd5'
+          : payload?.message || '请求失败，请稍后重试'
 
         reject(createError(message, statusCode))
       },
-      fail: () => {
-        reject(createError('\u7f51\u7edc\u8fde\u63a5\u5931\u8d25\uff0c\u8bf7\u786e\u8ba4\u672c\u5730\u540e\u7aef\u5df2\u542f\u52a8'))
+      fail: (error) => {
+        reject(error)
       },
     })
+  })
+
+export const request = <T>(options: RequestOptions): Promise<T> =>
+  new Promise((resolve, reject) => {
+    const session = options.withAuth ? getStoredSession() : null
+    const candidateBaseUrls = getApiBaseUrlCandidates()
+    const requestedPath = normalizeUrl(options.url)
+
+    const tryRequest = async (index: number): Promise<void> => {
+      const baseUrl = candidateBaseUrls[index] || getApiBaseUrl()
+      const requestUrl = `${baseUrl}${requestedPath}`
+      console.info('[api] request start', {
+        url: requestUrl,
+        method: options.method || 'GET',
+        withAuth: !!session,
+      })
+
+      try {
+        const result = await sendRequest<T>(requestUrl, options, session)
+        console.info('[api] request success', {
+          url: requestUrl,
+          method: options.method || 'GET',
+        })
+        resolve(result)
+      } catch (error) {
+        const hasNextCandidate = index < candidateBaseUrls.length - 1
+        const isNetworkFailure =
+          !!error && typeof error === 'object' && ('errMsg' in error || 'errno' in error)
+        const shouldFallbackForHttpError = isFallbackEligibleHttpError(error)
+
+        console.error('[api] 请求失败', {
+          url: requestUrl,
+          method: options.method || 'GET',
+          error,
+        })
+
+        if ((isNetworkFailure || shouldFallbackForHttpError) && hasNextCandidate) {
+          const nextBaseUrl = candidateBaseUrls[index + 1]
+          console.warn(`[api] ${baseUrl} 不可用或路由不存在，自动切换到 ${nextBaseUrl}`)
+          await tryRequest(index + 1)
+          return
+        }
+
+        if (error instanceof Error) {
+          reject(error)
+          return
+        }
+
+        reject(createError(`网络连接失败，请检查接口地址或后端服务：${baseUrl}`))
+      }
+    }
+
+    void tryRequest(0)
   })

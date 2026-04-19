@@ -2,29 +2,52 @@
 
 This directory contains the NestJS backend for the poker bookkeeping mini program.
 
-## What is included
+## Current Stack
 
-- NestJS project skeleton
-- Prisma data model for MySQL
-- Core accounting and settlement domain logic
-- Environment variable template for local development and CloudBase deployment
+- NestJS
+- Prisma + CloudBase MySQL
+- WeChat mini program login
+- CloudBase HTTP cloud function deployment
 
-## What you need before real deployment
+## Local Development
 
-- CloudBase environment ID
-- MySQL connection string
-- WeChat mini program `appId` and `appSecret`
+1. Install dependencies in `backend/`.
+2. Fill `.env` based on `.env.example`.
+3. Run `npm run prisma:generate`.
+4. Run `npm run prisma:migrate:dev -- --name init`.
+5. Run `npm run start:dev`.
 
-Redis is optional for MVP v1. The current plan is:
+## CloudBase Deployment
 
-- local development: NestJS + local MySQL
-- production: CloudBase Cloud Run + CloudBase MySQL
-- Redis: add later only if multi-instance realtime sync becomes necessary
+The backend source is built into `cloudfunctions/backend-http/` for deployment.
 
-## Recommended next steps
+From the project root:
 
-1. Install dependencies in `backend/`
-2. Fill `.env` based on `.env.example`
-3. Run `npx prisma generate`
-4. Run the first migration against your local MySQL
-5. Start implementing controllers and repositories
+```powershell
+npm run build:backend-http
+```
+
+The generated function package uses:
+
+- `cloudfunctions/backend-http/index.js`
+- `cloudfunctions/backend-http/scf_bootstrap`
+- `cloudfunctions/backend-http/package.json`
+
+## Required Environment Variables
+
+- `APP_RUNTIME`
+- `CLOUDBASE_ENV_ID`
+- `DATABASE_URL`
+- `HTTP_FUNCTION_PORT`
+- `WECHAT_APP_ID`
+- `WECHAT_APP_SECRET`
+- `JWT_SECRET`
+- `JWT_EXPIRES_IN`
+- `PRISMA_CONNECT_TIMEOUT_MS` (optional)
+- `PRISMA_CONNECT_MAX_RETRIES` (optional)
+- `PRISMA_CONNECT_RETRY_DELAY_MS` (optional)
+
+## Notes
+
+- Redis is optional for MVP v1 and is not required right now.
+- The mini program request base URL should point to the CloudBase HTTP function service domain.

@@ -4,12 +4,12 @@
   <view class="page-shell profile-page">
     <view class="hero-card profile-hero">
       <view class="profile-head">
-        <t-avatar size="96rpx">鹿</t-avatar>
+        <t-avatar size="96rpx">{{avatarText}}</t-avatar>
         <view class="profile-head__text">
           <view class="hero__title profile-title">{{profileName}}</view>
-          <view class="hero__subtitle">局内昵称可独立维护，不影响微信原生昵称。</view>
+          <view class="hero__subtitle">你的累计战绩和历史对局都会在这里同步更新。</view>
         </view>
-        <view class="chip-pill">近 7 天</view>
+        <view class="chip-pill">累计战绩</view>
       </view>
       <view class="summary-grid profile-stats">
         <view class="summary-card">
@@ -36,7 +36,7 @@
     <view class="panel-card">
       <view class="section-title">
         <view class="section-heading">战绩标签</view>
-        <t-tag theme="primary" variant="light">轻量画像</t-tag>
+        <t-tag theme="primary" variant="light">自动生成</t-tag>
       </view>
       <view class="tag-group">
         <view class="chip-pill" wx:for="{{tags}}" wx:key="*this">{{item}}</view>
@@ -46,7 +46,7 @@
     <view class="panel-card">
       <view class="section-title">
         <view class="section-heading">历史对局</view>
-        <view class="pill-text">{{history.length}} 条记录</view>
+        <view class="pill-text">共 {{history.length}} 场</view>
       </view>
       <view class="history-list" wx:if="{{history.length > 0}}">
         <view class="soft-cell profile-history-item" wx:for="{{history}}" wx:key="id">
@@ -59,7 +59,7 @@
           </view>
         </view>
       </view>
-      <view wx:else class="empty-state">历史记录已清空，下一局开始后会重新沉淀。</view>
+      <view wx:else class="empty-state">暂时还没有对局记录</view>
     </view>
 
     <view class="panel-card">
@@ -70,7 +70,7 @@
       <t-cell-group>
         <t-cell
           title="清空历史记录"
-          description="会删除本地 MVP 历史数据，建议后续接服务端接口时增加审计。"
+          description="清空当前账号的所有历史对局。"
           arrow
           bind:click="handleOpenClear"
         />
@@ -81,7 +81,7 @@
   <t-dialog
     visible="{{clearVisible}}"
     title="清空历史记录"
-    content="此操作会移除当前小程序中的战绩历史，请确认是否继续。"
+    content="确认后将清空当前账号的所有历史对局记录。"
     confirmBtn="确认清空"
     cancelBtn="取消"
     bind:confirm="handleConfirmClear"

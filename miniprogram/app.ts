@@ -1,5 +1,5 @@
 import { getAuthSession } from './utils/auth'
-import { getAppState } from './utils/mock'
+import { getApiBaseUrl, getApiBaseUrlCandidates, getMiniProgramEnvVersion } from './utils/env'
 
 App<IAppOption>({
   globalData: {
@@ -7,8 +7,11 @@ App<IAppOption>({
     authChecked: false,
   },
   onLaunch() {
-    getAppState()
     this.globalData.authSession = getAuthSession()
     this.globalData.authChecked = true
+    console.info('[app] API base url candidates', getApiBaseUrlCandidates())
+
+    console.info('[app] 当前环境', getMiniProgramEnvVersion())
+    console.info('[app] 当前接口地址', getApiBaseUrl())
   },
 })

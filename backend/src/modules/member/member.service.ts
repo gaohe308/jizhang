@@ -1,12 +1,12 @@
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common'
-import { EntryType } from '@prisma/client'
+import { EntryType } from '../../../generated/client/index'
 import { PrismaService } from '../../prisma/prisma.service'
 
 @Injectable()
 export class MemberService {
   constructor(private readonly prismaService: PrismaService) {}
 
-  async updateNickname(userId: string, roomId: string, displayName: string) {
+  async updateNickname(userId: string, openid: string, roomId: string, displayName: string) {
     const room = await this.prismaService.room.findUnique({
       where: { id: roomId },
       include: {
@@ -42,6 +42,7 @@ export class MemberService {
 
       await tx.ledgerEntry.create({
         data: {
+          cloudbaseOpenId: openid,
           roomId: room.id,
           operatorMemberId: member.id,
           entryType: EntryType.SYSTEM,

@@ -24,6 +24,6 @@ export class SettlementController {
       }
     }
 
-    return this.settlementService.archiveRoom(user.userId, roomId)
+    return this.settlementService.archiveRoom(user.userId, user.openid, roomId)
   }
 }

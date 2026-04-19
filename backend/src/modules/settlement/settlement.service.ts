@@ -1,5 +1,5 @@
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common'
-import { MemberRole, RoomStatus } from '@prisma/client'
+import { MemberRole, RoomStatus } from '../../../generated/client/index'
 import { PrismaService } from '../../prisma/prisma.service'
 import { MemberBalanceSnapshot } from '../../shared/types/room.types'
 import { buildSettlementSummary } from './domain/settlement-calculator'
@@ -48,7 +48,7 @@ export class SettlementService {
     return this.buildSummary(this.buildMemberSnapshots(room))
   }
 
-  async archiveRoom(userId: string, roomId: string) {
+  async archiveRoom(userId: string, openid: string, roomId: string) {
     const room = await this.prismaService.room.findUnique({
       where: { id: roomId },
       include: {
@@ -70,6 +70,7 @@ export class SettlementService {
     await this.prismaService.$transaction(async (tx) => {
       const settlement = await tx.settlement.create({
         data: {
+          cloudbaseOpenId: openid,
           roomId,
           teaFeeAmount: summary.teaFeeAmount,
           transferCount: summary.transferCount,
@@ -77,6 +78,7 @@ export class SettlementService {
           createdByUserId: userId,
           items: {
             create: summary.plans.map((item) => ({
+              cloudbaseOpenId: openid,
               fromMemberId: item.fromMemberId,
               toMemberId: item.toMemberId,
               amount: item.amount,
@@ -89,6 +91,7 @@ export class SettlementService {
         data: room.members
           .filter((member) => member.role !== MemberRole.TEA && member.userId)
           .map((member) => ({
+            cloudbaseOpenId: openid,
             userId: member.userId!,
             roomId,
             roomName: room.roomName,

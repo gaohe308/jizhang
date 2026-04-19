@@ -20,6 +20,7 @@ export class AccountingController {
     return this.accountingService.submitSingleTransfer({
       roomId,
       userId: user.userId,
+      openid: user.openid,
       requestId: dto.requestId,
       targetMemberId: dto.targetMemberId,
       amount: dto.amount,
@@ -35,6 +36,7 @@ export class AccountingController {
     return this.accountingService.submitBatchTransfer({
       roomId,
       userId: user.userId,
+      openid: user.openid,
       requestId: dto.requestId,
       entries: dto.entries,
     })

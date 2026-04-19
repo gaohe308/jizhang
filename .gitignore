@@ -1,3 +1,12 @@
 node_modules
 .evn
 miniprogram_npm
+backend.zip
+backend-cloudbase-upload.zip
+runtime/
+cloudfunctions/backend-http/dist/
+cloudfunctions/backend-http/generated/
+cloudfunctions/backend-http/node_modules/
+cloudfunctions/backend-http/package-lock.json
+cloudfunctions/backend-http/prisma/
+backend/generated/

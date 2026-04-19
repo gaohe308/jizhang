@@ -42,7 +42,7 @@
     <view class="login-panel hero-card">
       <view class="login-panel__eyebrow">微信登录</view>
       <view class="login-panel__title">先登录，再开始记账</view>
-      <view class="login-panel__desc">登录后即可创建房间、扫码加入，并同步你的本周战绩与个人数据。</view>
+      <view class="login-panel__desc">登录后即可创建房间、扫码加入，并同步本周战绩。</view>
       <view wx:if="{{authNickname}}" class="login-panel__hint">上次登录账号：{{authNickname}}</view>
 
       <view class="action-shell action-shell--primary login-panel__button" bind:tap="handleWechatLogin">

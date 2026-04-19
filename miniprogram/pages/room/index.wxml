@@ -40,26 +40,18 @@
         </scroll-view>
 
         <view class="tea-dock" wx:if="{{teaMember}}">
-          <view
-            class="stage-card stage-card--tea-fixed"
-            bind:tap="handleOpenTeaSettings"
-          >
+          <view class="stage-card stage-card--tea-fixed" bind:tap="handleOpenTeaSettings">
             <view class="tea-badge">茶</view>
             <view class="stage-card__name">{{teaMember.name}}</view>
-            <view class="stage-card__score stat-negative">￥{{teaMember.balance}}</view>
+            <view class="stage-card__score {{teaMember.balance >= 0 ? 'stat-positive' : 'stat-negative'}}">
+              {{teaMember.balance >= 0 ? '+' : ''}}{{teaMember.balance}}
+            </view>
           </view>
         </view>
       </view>
 
       <view class="hint-strip">
-        <swiper
-          class="hint-swiper"
-          vertical
-          autoplay
-          circular
-          interval="2800"
-          duration="350"
-        >
+        <swiper class="hint-swiper" vertical autoplay circular interval="2800" duration="350">
           <swiper-item wx:for="{{hintMessages}}" wx:key="*this">
             <view class="hint-strip__item">{{item}}</view>
           </swiper-item>
@@ -122,7 +114,9 @@
           <view class="rail-card rail-card--tea" wx:if="{{teaMember}}" bind:tap="handleOpenTeaSettings">
             <view class="rail-card__tea">茶</view>
             <view class="rail-card__name">{{teaMember.name}}</view>
-            <view class="rail-card__score stat-negative">￥{{teaMember.balance}}</view>
+            <view class="rail-card__score {{teaMember.balance >= 0 ? 'stat-positive' : 'stat-negative'}}">
+              {{teaMember.balance >= 0 ? '+' : ''}}{{teaMember.balance}}
+            </view>
           </view>
 
           <view class="rail-batch" bind:tap="handleOpenBatchPopup">
@@ -133,14 +127,7 @@
 
       <scroll-view class="left-main" scroll-y enable-flex>
         <view class="hint-strip hint-strip--left">
-          <swiper
-            class="hint-swiper"
-            vertical
-            autoplay
-            circular
-            interval="2800"
-            duration="350"
-          >
+          <swiper class="hint-swiper" vertical autoplay circular interval="2800" duration="350">
             <swiper-item wx:for="{{hintMessages}}" wx:key="*this">
               <view class="hint-strip__item">{{item}}</view>
             </swiper-item>
@@ -195,13 +182,13 @@
   <t-popup visible="{{renameVisible}}" placement="bottom" bind:visible-change="handleRenameVisibleChange">
     <view class="popup-sheet">
       <view class="popup-sheet__title">修改局内昵称</view>
-      <view class="muted popup-sheet__desc">只影响当前牌局内的显示名称，不影响微信昵称。</view>
+      <view class="muted popup-sheet__desc">仅修改当前房间内显示的名字，不影响微信昵称。</view>
       <view class="input-shell">
         <input
           class="rename-input"
           value="{{renameValue}}"
           maxlength="8"
-          placeholder="请输入昵称"
+          placeholder="请输入名字"
           bindinput="handleRenameInput"
         />
       </view>
@@ -215,18 +202,17 @@
     <view class="settings-sheet batch-sheet">
       <view class="settings-sheet__head">
         <view class="settings-sheet__title">批量记账</view>
-        <view class="settings-sheet__close" bind:tap="handleCloseBatchTransfer">×</view>
+        <view class="settings-sheet__close" bind:tap="handleCloseBatchTransfer">x</view>
       </view>
 
-      <view class="batch-sheet__title">记录转给多个用户的金额</view>
-      <view class="muted batch-sheet__desc">提示：在需要转账的用户后输入转给对方的金额，没有可不填。</view>
+      <view class="batch-sheet__title">转给多人</view>
+      <view class="muted batch-sheet__desc">在需要转账的成员后面填写金额，未填写则不转账。</view>
 
       <scroll-view class="batch-list" scroll-y enable-flex>
         <view class="batch-list__inner">
           <view class="batch-item" wx:for="{{batchTransfers}}" wx:key="id">
             <view class="batch-item__user">
-              <t-avatar size="72rpx" wx:if="{{item.role !== 'tea'}}">{{item.shortName}}</t-avatar>
-              <view class="batch-item__tea" wx:else>茶</view>
+              <t-avatar size="72rpx">{{item.shortName}}</t-avatar>
               <view class="batch-item__name">{{item.name}}</view>
             </view>
             <view class="batch-item__input">
@@ -235,7 +221,7 @@
                 type="number"
                 value="{{item.amount}}"
                 data-target-id="{{item.id}}"
-                placeholder="请输入金额"
+                placeholder="输入金额"
                 bindinput="handleBatchAmountInput"
               />
             </view>
@@ -262,7 +248,7 @@
     <view class="settings-sheet">
       <view class="settings-sheet__head">
         <view class="settings-sheet__title">房间设置</view>
-        <view class="settings-sheet__close" bind:tap="handleCloseSettings">×</view>
+        <view class="settings-sheet__close" bind:tap="handleCloseSettings">x</view>
       </view>
 
       <view class="settings-card">
@@ -301,9 +287,16 @@
       </view>
 
       <view class="settings-actions">
-        <view class="settings-contact" bind:tap="handleContactService">
+        <button
+          class="settings-contact"
+          open-type="contact"
+          session-from="{{roomId}}"
+          send-message-title="{{roomName || '牌局记账'}}"
+          show-message-card="{{true}}"
+          bind:error="handleContactServiceError"
+        >
           <view class="settings-contact__face">联系客服</view>
-        </view>
+        </button>
       </view>
     </view>
   </t-popup>
@@ -312,7 +305,7 @@
     <view class="settings-sheet tea-sheet">
       <view class="settings-sheet__head">
         <view class="settings-sheet__title">茶水设置</view>
-        <view class="settings-sheet__close" bind:tap="handleCloseTeaSettings">×</view>
+        <view class="settings-sheet__close" bind:tap="handleCloseTeaSettings">x</view>
       </view>
 
       <view class="tea-sheet__section">
@@ -343,7 +336,7 @@
             <view class="tea-form__group">
               <view class="tea-field__label">每满</view>
               <view class="tea-input-shell">
-                <input class="tea-input" type="number" value="{{teaFeeFullThreshold}}" data-field="teaFeeFullThreshold" placeholder="输入金额" bindinput="handleTeaInput" />
+                <input class="tea-input" type="number" value="{{teaFeeFullThreshold}}" data-field="teaFeeFullThreshold" placeholder="输入门槛" bindinput="handleTeaInput" />
               </view>
             </view>
             <view class="tea-form__group">
@@ -358,7 +351,7 @@
         <view class="tea-field tea-field--stack">
           <view class="tea-field__label">上限</view>
           <view class="tea-input-shell tea-input-shell--wide">
-            <input class="tea-input" type="number" value="{{teaFeeCap}}" data-field="teaFeeCap" placeholder="茶水抽成最大值" bindinput="handleTeaInput" />
+            <input class="tea-input" type="number" value="{{teaFeeCap}}" data-field="teaFeeCap" placeholder="茶水上限" bindinput="handleTeaInput" />
           </view>
         </view>
       </view>

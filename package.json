@@ -2,14 +2,18 @@
   "name": "miniprogram-ts-quickstart",
   "version": "1.0.0",
   "description": "",
-  "scripts": {},
+  "scripts": {
+    "build:backend-http": "powershell -ExecutionPolicy Bypass -File .\\scripts\\build-cloudfunction-backend.ps1"
+  },
   "keywords": [],
   "author": "",
   "license": "",
   "dependencies": {
+    "@prisma/client": "^6.19.3",
     "tdesign-miniprogram": "^1.13.2"
   },
   "devDependencies": {
-    "miniprogram-api-typings": "^2.8.3-1"
+    "miniprogram-api-typings": "^2.8.3-1",
+    "prisma": "^6.19.3"
   }
 }

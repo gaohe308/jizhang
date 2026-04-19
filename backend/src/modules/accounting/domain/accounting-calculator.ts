@@ -7,7 +7,8 @@ import {
 
 const cloneMembers = (members: MemberBalanceSnapshot[]) => members.map((member) => ({ ...member }))
 
-const getMember = (members: MemberBalanceSnapshot[], memberId: string) => members.find((member) => member.id === memberId) || null
+const getMember = (members: MemberBalanceSnapshot[], memberId: string) =>
+  members.find((member) => member.id === memberId) || null
 
 export const calculateTeaFee = (amount: number, rules: RoomRuleSnapshot) => {
   const fee =

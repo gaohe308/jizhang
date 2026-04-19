@@ -1,5 +1,5 @@
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common'
-import { EntryType, LayoutMode, MemberRole, TeaFeeType } from '@prisma/client'
+import { EntryType, LayoutMode, MemberRole, TeaFeeType } from '../../../generated/client/index'
 import { PrismaService } from '../../prisma/prisma.service'
 import { UpdateRoomRuleDto } from './dto/update-room-rule.dto'
 
@@ -7,7 +7,7 @@ import { UpdateRoomRuleDto } from './dto/update-room-rule.dto'
 export class RuleService {
   constructor(private readonly prismaService: PrismaService) {}
 
-  async updateRules(userId: string, roomId: string, dto: UpdateRoomRuleDto) {
+  async updateRules(userId: string, openid: string, roomId: string, dto: UpdateRoomRuleDto) {
     const room = await this.prismaService.room.findUnique({
       where: { id: roomId },
       include: {
@@ -26,8 +26,18 @@ export class RuleService {
     }
 
     const nextVersion = room.currentVersion + 1
-    const teaFeeType = dto.teaFeeType === 'full' ? TeaFeeType.FULL : dto.teaFeeType === 'percent' ? TeaFeeType.PERCENT : room.rules.teaFeeType
-    const layoutMode = dto.layoutMode === 'left' ? LayoutMode.LEFT : dto.layoutMode === 'top' ? LayoutMode.TOP : room.rules.layoutMode
+    const teaFeeType =
+      dto.teaFeeType === 'full'
+        ? TeaFeeType.FULL
+        : dto.teaFeeType === 'percent'
+          ? TeaFeeType.PERCENT
+          : room.rules.teaFeeType
+    const layoutMode =
+      dto.layoutMode === 'left'
+        ? LayoutMode.LEFT
+        : dto.layoutMode === 'top'
+          ? LayoutMode.TOP
+          : room.rules.layoutMode
 
     await this.prismaService.$transaction(async (tx) => {
       await tx.roomRule.update({
@@ -54,6 +64,7 @@ export class RuleService {
 
       await tx.ledgerEntry.create({
         data: {
+          cloudbaseOpenId: openid,
           roomId,
           operatorMemberId: operator.id,
           entryType: EntryType.RULE_CHANGE,

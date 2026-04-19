@@ -13,12 +13,12 @@ export class RoomController {
 
   @Post()
   createRoom(@CurrentUser() user: AuthUser, @Body() dto: CreateRoomDto) {
-    return this.roomService.createRoom(user.userId, dto.roomName)
+    return this.roomService.createRoom(user.userId, user.openid, dto.roomName)
   }
 
   @Post('join')
   joinRoom(@CurrentUser() user: AuthUser, @Body() dto: JoinRoomDto) {
-    return this.roomService.joinRoom(user.userId, dto.roomCode)
+    return this.roomService.joinRoom(user.userId, user.openid, dto.roomCode)
   }
 
   @Get(':roomId')

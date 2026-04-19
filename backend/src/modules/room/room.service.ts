@@ -1,5 +1,12 @@
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common'
-import { EntryType, LayoutMode, MemberRole, Prisma, RoomStatus, TeaFeeType } from '@prisma/client'
+import {
+  EntryType,
+  LayoutMode,
+  MemberRole,
+  Prisma,
+  RoomStatus,
+  TeaFeeType,
+} from '../../../generated/client/index'
 import { PrismaService } from '../../prisma/prisma.service'
 
 const roomInclude = {
@@ -83,7 +90,7 @@ export class RoomService {
     throw new BadRequestException('Failed to generate a unique room code.')
   }
 
-  async createRoom(userId: string, roomName?: string) {
+  async createRoom(userId: string, openid: string, roomName?: string) {
     const user = await this.prismaService.user.findUnique({
       where: { id: userId },
     })
@@ -98,6 +105,7 @@ export class RoomService {
     const room = await this.prismaService.$transaction(async (tx) => {
       const createdRoom = await tx.room.create({
         data: {
+          cloudbaseOpenId: openid,
           roomCode,
           roomName: nextRoomName,
           ownerUserId: user.id,
@@ -108,6 +116,7 @@ export class RoomService {
       await tx.roomMember.createMany({
         data: [
           {
+            cloudbaseOpenId: openid,
             roomId: createdRoom.id,
             userId: user.id,
             displayName: user.nickname,
@@ -115,6 +124,7 @@ export class RoomService {
             isOnline: true,
           },
           {
+            cloudbaseOpenId: openid,
             roomId: createdRoom.id,
             userId: null,
             displayName: '茶水',
@@ -126,6 +136,7 @@ export class RoomService {
 
       await tx.roomRule.create({
         data: {
+          cloudbaseOpenId: openid,
           roomId: createdRoom.id,
           teaFeeType: TeaFeeType.PERCENT,
           teaFeePercent: 10,
@@ -147,7 +158,7 @@ export class RoomService {
     return this.mapRoomSnapshot(room, userId)
   }
 
-  async joinRoom(userId: string, roomCode: string) {
+  async joinRoom(userId: string, openid: string, roomCode: string) {
     const user = await this.prismaService.user.findUnique({
       where: { id: userId },
     })
@@ -184,6 +195,7 @@ export class RoomService {
     const joinedRoom = await this.prismaService.$transaction(async (tx) => {
       const member = await tx.roomMember.create({
         data: {
+          cloudbaseOpenId: openid,
           roomId: room.id,
           userId: user.id,
           displayName: user.nickname,
@@ -201,6 +213,7 @@ export class RoomService {
 
       await tx.ledgerEntry.create({
         data: {
+          cloudbaseOpenId: openid,
           roomId: room.id,
           operatorMemberId: member.id,
           entryType: EntryType.SYSTEM,

@@ -1,5 +1,5 @@
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common'
-import { EntryType, LayoutMode, TeaFeeType } from '@prisma/client'
+import { EntryType, LayoutMode, TeaFeeType } from '../../../generated/client/index'
 import { PrismaService } from '../../prisma/prisma.service'
 import {
   BatchAccountingInputItem,
@@ -78,6 +78,7 @@ export class AccountingService {
   async submitSingleTransfer(params: {
     roomId: string
     userId: string
+    openid: string
     requestId: string
     targetMemberId: string
     amount: number
@@ -126,6 +127,7 @@ export class AccountingService {
 
       await tx.ledgerEntry.create({
         data: {
+          cloudbaseOpenId: params.openid,
           roomId: room.id,
           requestId: params.requestId,
           operatorMemberId: result.ledger.operatorId,
@@ -135,6 +137,7 @@ export class AccountingService {
           roomVersion: nextVersion,
           items: {
             create: result.ledger.items.map((item) => ({
+              cloudbaseOpenId: params.openid,
               fromMemberId: item.fromMemberId,
               toMemberId: item.toMemberId,
               amount: item.amount,
@@ -152,6 +155,7 @@ export class AccountingService {
   async submitBatchTransfer(params: {
     roomId: string
     userId: string
+    openid: string
     requestId: string
     entries: BatchAccountingInputItem[]
   }) {
@@ -198,6 +202,7 @@ export class AccountingService {
 
       await tx.ledgerEntry.create({
         data: {
+          cloudbaseOpenId: params.openid,
           roomId: room.id,
           requestId: params.requestId,
           operatorMemberId: result.ledger.operatorId,
@@ -207,6 +212,7 @@ export class AccountingService {
           roomVersion: nextVersion,
           items: {
             create: result.ledger.items.map((item) => ({
+              cloudbaseOpenId: params.openid,
               fromMemberId: item.fromMemberId,
               toMemberId: item.toMemberId,
               amount: item.amount,

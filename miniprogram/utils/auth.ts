@@ -13,6 +13,27 @@ export const clearAuthSession = () => {
   clearStoredSession()
 }
 
+interface RetryableAuthError extends Error {
+  statusCode?: number
+}
+
+const isRetryableLoginError = (error: unknown) => {
+  if (!(error instanceof Error)) {
+    return false
+  }
+
+  const normalizedMessage = error.message.toLowerCase()
+  const statusCode = (error as RetryableAuthError).statusCode
+
+  return (
+    normalizedMessage.includes('timeout') ||
+    normalizedMessage.includes('function invoke failed') ||
+    normalizedMessage.includes('internal server error') ||
+    statusCode === 408 ||
+    !!statusCode && statusCode >= 500
+  )
+}
+
 export const validateSession = async (): Promise<AuthSession | null> => {
   const session = getStoredSession()
   if (!session) {
@@ -42,26 +63,41 @@ const getWechatCode = (): Promise<string> =>
     wx.login({
       success: (result) => {
         if (!result.code) {
-          reject(new Error('\u83b7\u53d6\u5fae\u4fe1\u767b\u5f55\u51ed\u8bc1\u5931\u8d25'))
+          reject(new Error('获取微信登录凭证失败'))
           return
         }
 
         resolve(result.code)
       },
       fail: () => {
-        reject(new Error('\u5fae\u4fe1\u767b\u5f55\u5931\u8d25\uff0c\u8bf7\u7a0d\u540e\u518d\u8bd5'))
+        reject(new Error('微信登录失败，请稍后再试'))
       },
     })
   })
 
 export const loginWithWechat = async (): Promise<AuthSession> => {
-  const code = await getWechatCode()
-  const session = await request<AuthSession>({
-    url: '/auth/login',
-    method: 'POST',
-    data: { code },
-  })
+  let lastError: unknown
 
-  setStoredSession(session)
-  return session
+  for (let attempt = 1; attempt <= 2; attempt += 1) {
+    try {
+      const code = await getWechatCode()
+      const session = await request<AuthSession>({
+        url: '/auth/login',
+        method: 'POST',
+        data: { code },
+      })
+
+      setStoredSession(session)
+      return session
+    } catch (error) {
+      lastError = error
+      if (attempt >= 2 || !isRetryableLoginError(error)) {
+        throw error
+      }
+
+      console.warn(`[auth] login attempt ${attempt} failed, retrying with a fresh wx.login code`, error)
+    }
+  }
+
+  throw lastError instanceof Error ? lastError : new Error('登录失败，请稍后重试')
 }
